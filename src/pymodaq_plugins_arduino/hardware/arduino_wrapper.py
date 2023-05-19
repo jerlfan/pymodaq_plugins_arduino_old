@@ -5,7 +5,7 @@ Demo Wrapper to illustrate the plugin developpement. This Mock wrapper will emul
 from time import perf_counter, sleep
 import time
 import math
-import serial
+from pymodaq_plugins_arduino.hardware.ruler_wrapper import IK220
 from serial.tools import list_ports
 ports = [port.name for port in list_ports.comports()]
 
@@ -26,15 +26,11 @@ class ActuatorWrapper:
         bool: True is instrument is opened else False
         """
         self.device=telemetrix.Telemetrix(com_port=port)
-        self.motor = self.device.set_pin_mode_stepper(interface=2, pin1=8, pin2=9)
+        self.motor = self.device.set_pin_mode_stepper(interface=2, pin1=3, pin2=4)
+        self.ruler = IK220()
 
         return True
 
-    def sendToArduino(self, sendStr):
-        startMarker = '<'
-        endMarker = '>'
-        message = startMarker + sendStr + endMarker
-        self.device.write(message.encode())
 
     def the_callback(data):
         date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data[2]))
@@ -57,7 +53,8 @@ class ActuatorWrapper:
         self._target_value = value
         self._init_value = self._current_value
         self._current_value = self._init_value + self._target_value
-
+        self.accel_set(400)
+        self.max_speed_set(400)
 
 
         self.device.stepper_move(self.motor,int(value))
@@ -74,8 +71,8 @@ class ActuatorWrapper:
         self.device.stepper_set_acceleration(self.motor, value)
 
 
-    def stop(self):
-        self.sendToArduino(f'move,{stop}')
+    #def stop(self):
+        #self.sendToArduino(f'move,{stop}')
 
     def current_position_callback(data):
         print(f'current_position_callback returns {data[2]}\n')
@@ -88,13 +85,12 @@ class ActuatorWrapper:
         float: The current value
         """
         #self.device.stepper_get_current_position(self.motor, ActuatorWrapper.current_position_callback)
-
-        return self._current_value
+        position = self.ruler.get_axis_position(1)
+        return position
 
     def close_communication(self):
         self.device.shutdown()
-        connected = self.device.isOpen()
-        return f'Motor connected:{connected}'
+        return f'Motor disconnected:'
 
 
 

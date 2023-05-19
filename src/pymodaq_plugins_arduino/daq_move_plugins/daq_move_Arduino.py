@@ -4,9 +4,10 @@ from pymodaq.daq_utils.daq_utils import ThreadCommand, getLineInfo  # object use
 from easydict import EasyDict as edict  # type of dict
 from pymodaq_plugins_arduino.hardware.arduino_wrapper import ActuatorWrapper
 
+
 from serial.tools import list_ports
 ports = [str(port.name) for port in list_ports.comports()]
-port = '/dev/tty.usbmodem401301' #if 'cu.usbmodem401301' in ports else ports[0] if len(ports)>0 else ''
+port = 'COM5' #if 'cu.usbmodem401301' in ports else ports[0] if len(ports)>0 else ''
 class DAQ_Move_Arduino(DAQ_Move_base):
     """
         Wrapper object to access the Mock fonctionnalities, similar wrapper for all controllers.
@@ -62,7 +63,7 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         float: The position obtained after scaling conversion.
         """
         ## TODO for your custom plugin
-        pos = self.controller.your_method_to_get_the_actuator_value()
+        pos = self.controller.get_value()
         ##
 
         pos = self.get_position_with_scaling(pos)
