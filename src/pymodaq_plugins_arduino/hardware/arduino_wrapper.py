@@ -18,6 +18,8 @@ class ActuatorWrapper:
         self._current_value = 0
         self._target_value = None
 
+
+
     def open_communication(self, port):
         """
         fake instrument opening communication.
@@ -196,18 +198,5 @@ class ActuatorWrapperWithTau(ActuatorWrapper):
 
 
 
-if __name__ == '__main__':
-    actuator = ActuatorWrapperWithTau()
-    init_pos = actuator.get_value()
-    print(f'Init: {init_pos}')
-    target = 100
-    actuator.move_at(target)
-    time = perf_counter()
-    while perf_counter() - time < 100:
-        sleep(0.1)
-        pos = actuator.get_value()
-        print(pos)
-        if math.fabs(pos - target) < actuator.epsilon:
-            print(f'Elapsed time : {perf_counter() - time}')
-            break
+
 

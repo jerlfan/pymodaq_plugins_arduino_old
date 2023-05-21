@@ -17,9 +17,9 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         *params*          dictionnary
         =============== ==============
     """
-    _controller_units = 'whatever'
-    is_multiaxes = True  # set to True if this plugin is controlled for a multiaxis controller (with a unique communication link)
-    stage_names = []  # "list of strings of the multiaxes
+    _controller_units = 'wavenumber (cm-1)'
+    is_multiaxes = False  # set to True if this plugin is controlled for a multiaxis controller (with a unique communication link)
+    stage_names = ['Motor 1']  # "list of strings of the multiaxes
 
     params = [   ## TODO for your custom plugin
                  # elements to be added here as dicts in order to control your custom stage
@@ -153,7 +153,6 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         """
 
         position = self.check_bound(position)  #if user checked bounds, the defined bounds are applied here
-        #position = self.set_position_with_scaling(position)  # apply scaling if the user specified one
 
         ## TODO for your custom plugin
         self.controller.move_at(position)
