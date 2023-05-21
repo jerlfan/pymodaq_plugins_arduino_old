@@ -5,18 +5,19 @@ Demo Wrapper to illustrate the plugin developpement. This Mock wrapper will emul
 from time import perf_counter, sleep
 import time
 import math
-from pymodaq_plugins_arduino.hardware.ruler_wrapper import IK220
+
 from serial.tools import list_ports
 ports = [port.name for port in list_ports.comports()]
 
+from pymodaq_plugins_arduino.hardware.ruler_wrapper import IK220
 from telemetrix import telemetrix
 class ActuatorWrapper:
-    units = 'step'
-
+    units = 'wavenumber (cm-1)'
     def __init__(self):
         self._com_port = ''
         self._current_value = 0
         self._target_value = None
+
 
 
 
@@ -54,22 +55,22 @@ class ActuatorWrapper:
         """
         self._target_value = value
         self._init_value = self._current_value
-        self._current_value = self._init_value + self._target_value
-        self.accel_set(400)
-        self.max_speed_set(400)
+        n_steps = round((self._target_value-self._init_value)/0.003)
+        print(f'{self._init_value}')
+        print(f'{self._target_value-self._init_value}')
+        print(f'nombre de pas {n_steps}')
 
-
-        self.device.stepper_move(self.motor,int(value))
+        self.device.stepper_move(self.motor,int(n_steps))
         self.device.stepper_run(self.motor,completion_callback=ActuatorWrapper.the_callback)
-        # self._start_time = perf_counter()
+        #self._start_time = perf_counter()
         self._moving = True
-        self._target_value = value
-        self._current_value = value
-
-    def accel_set(self,value):
-        self.device.stepper_set_max_speed(self.motor, value)
+        #self._target_value = value
+        #self._current_value = value
 
     def max_speed_set(self,value):
+        self.device.stepper_set_max_speed(self.motor, value)
+
+    def accel_set(self,value):
         self.device.stepper_set_acceleration(self.motor, value)
 
 
@@ -87,8 +88,8 @@ class ActuatorWrapper:
         float: The current value
         """
         #self.device.stepper_get_current_position(self.motor, ActuatorWrapper.current_position_callback)
-        position = self.ruler.get_axis_position(1)
-        return position
+        self._current_value = self.ruler.get_axis_position(1)
+        return self._current_value
 
     def close_communication(self):
         self.device.shutdown()

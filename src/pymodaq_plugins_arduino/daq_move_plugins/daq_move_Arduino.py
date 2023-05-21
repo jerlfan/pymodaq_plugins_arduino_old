@@ -17,7 +17,9 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         *params*          dictionnary
         =============== ==============
     """
-    _controller_units = 'wavenumber (cm-1)'
+    _controller_units = ActuatorWrapper.units
+
+
     is_multiaxes = False  # set to True if this plugin is controlled for a multiaxis controller (with a unique communication link)
     stage_names = ['Motor 1']  # "list of strings of the multiaxes
 
@@ -26,9 +28,9 @@ class DAQ_Move_Arduino(DAQ_Move_base):
                  ############
                  {'title': 'Com port:', 'name': 'comport', 'type': 'str', 'limits':ports, 'value': port,
                   'tip': 'The serial COM port'},
-                 {'title': 'Acceleration:', 'name': 'accel', 'type': 'int', 'value': 800,
+                 {'title': 'Acceleration:', 'name': 'accel', 'type': 'int', 'value': 200,
                   'tip': 'Set the stepper motor acceleration'},
-                 {'title': 'Max speed:', 'name': 'maxspeed', 'type': 'int', 'value': 800,
+                 {'title': 'Max speed:', 'name': 'maxspeed', 'type': 'int', 'value': 1000,
                   'tip': 'Set the stepper motor max speed'},
                  {'title': 'MultiAxes:', 'name': 'multiaxes', 'type': 'group', 'visible': is_multiaxes, 'children': [
                      {'title': 'is Multiaxes:', 'name': 'ismultiaxes', 'type': 'bool', 'value': is_multiaxes,
@@ -92,7 +94,8 @@ class DAQ_Move_Arduino(DAQ_Move_base):
            self.controller.accel_set(self.settings.child(('accel')).value())
         elif param.name() == self.settings.child(('maxspeed')):
            self.controller.max_speed_set(self.settings.child(('maxspeed')).value())
-        ##
+        elif param.name() == 'epsilon':
+            self.controller.epsilon = param.value()
 
     def ini_stage(self, controller=None):
         """Actuator communication initialization
@@ -155,6 +158,8 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         position = self.check_bound(position)  #if user checked bounds, the defined bounds are applied here
 
         ## TODO for your custom plugin
+        self.controller.accel_set(self.settings.child(('accel')).value())
+        self.controller.max_speed_set(self.settings.child(('maxspeed')).value())
         self.controller.move_at(position)
         self.emit_status(ThreadCommand('Update_Status',['Some info you want to log']))
         ##############################
