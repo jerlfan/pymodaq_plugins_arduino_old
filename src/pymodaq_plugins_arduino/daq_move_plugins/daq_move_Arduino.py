@@ -18,6 +18,8 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         =============== ==============
     """
     _controller_units = ActuatorWrapper.units
+    axes_names = ['grating']  # TODO for your plugin: complete the list
+    _epsilon = 1  # TODO replace this by a value that is correct depending on your controller
 
 
     is_multiaxes = False  # set to True if this plugin is controlled for a multiaxis controller (with a unique communication link)
@@ -28,6 +30,8 @@ class DAQ_Move_Arduino(DAQ_Move_base):
                  ############
                  {'title': 'Com port:', 'name': 'comport', 'type': 'str', 'limits':ports, 'value': port,
                   'tip': 'The serial COM port'},
+                 #{'title': 'Laser wavelength:', 'name': 'wavelength', 'type': 'float', 'limits': ports, 'value': port,
+                  #'tip': 'The wavelength of the laser'},
                  {'title': 'Acceleration:', 'name': 'accel', 'type': 'int', 'value': 200,
                   'tip': 'Set the stepper motor acceleration'},
                  {'title': 'Max speed:', 'name': 'maxspeed', 'type': 'int', 'value': 1000,
@@ -66,6 +70,7 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         """
         ## TODO for your custom plugin
         pos = self.controller.get_value()
+
         ##
 
         pos = self.get_position_with_scaling(pos)
@@ -78,8 +83,7 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         Terminate the communication protocol
         """
         ## TODO for your custom plugin
-        self.controller.your_method_to_terminate_the_communication()
-        ##
+        self.controller.close_communication()        ##
 
     def commit_settings(self, param):
         """
@@ -94,6 +98,8 @@ class DAQ_Move_Arduino(DAQ_Move_base):
            self.controller.accel_set(self.settings.child(('accel')).value())
         elif param.name() == self.settings.child(('maxspeed')):
            self.controller.max_speed_set(self.settings.child(('maxspeed')).value())
+        #elif param.name() == self.settings.child(('wavelength')):
+        #    self.controller.max_speed_set(self.settings.child(('wavelength')).value())
         elif param.name() == 'epsilon':
             self.controller.epsilon = param.value()
 
@@ -112,40 +118,15 @@ class DAQ_Move_Arduino(DAQ_Move_base):
             *initialized: (bool): False if initialization failed otherwise True
         """
 
+        self.ini_stage_init(old_controller=controller, new_controller=ActuatorWrapper())
+        self.controller.open_communication(self.settings.child(('comport')).value())
 
-        try:
-            # initialize the stage and its controller status
-            # controller is an object that may be passed to other instances of DAQ_Move_Mock in case
-            # of one controller controlling multiactuators (or detector)
+        self.controller.accel_set(self.settings.child(('accel')).value())
+        self.controller.max_speed_set(self.settings.child(('maxspeed')).value())
 
-            self.status.update(edict(info="", controller=None, initialized=False))
-
-            # check whether this stage is controlled by a multiaxe controller (to be defined for each plugin)
-            # if multiaxes then init the controller here if Master state otherwise use external controller
-            if self.settings.child('multiaxes', 'ismultiaxes').value() and self.settings.child('multiaxes',
-                                   'multi_status').value() == "Slave":
-                if controller is None:
-                    raise Exception('no controller has been defined externally while this axe is a slave one')
-                else:
-                    self.controller = controller
-            else:  # Master stage
-
-                ## TODO for your custom plugin
-                self.controller = ActuatorWrapper()  # any object that will control the stages
-                self.controller.open_communication(self.settings.child(('comport')).value())
-                #####################################
-
-            self.status.info = "Whatever info you want to log"
-            self.status.controller = self.controller
-            self.status.initialized = True
-            return self.status
-
-        except Exception as e:
-            self.emit_status(ThreadCommand('Update_Status',[getLineInfo()+ str(e),'log']))
-            self.status.info=getLineInfo()+ str(e)
-            self.status.initialized=False
-            return self.status
-
+        info = "Connected"
+        initialized = True  # self.controller.a_method_or_atttribute_to_check_if_init()  # todo
+        return info, initialized
 
     def move_Abs(self, position):
         """ Move the actuator to the absolute target defined by position
@@ -157,17 +138,19 @@ class DAQ_Move_Arduino(DAQ_Move_base):
 
         position = self.check_bound(position)  #if user checked bounds, the defined bounds are applied here
 
-        ## TODO for your custom plugin
-        self.controller.accel_set(self.settings.child(('accel')).value())
-        self.controller.max_speed_set(self.settings.child(('maxspeed')).value())
+
         self.controller.move_at(position)
-        self.emit_status(ThreadCommand('Update_Status',['Some info you want to log']))
+        self.emit_status(ThreadCommand('Update_Status',['Move done']))
         ##############################
 
 
 
         self.target_position = position
-        self.poll_moving()  #start a loop to poll the current actuator value and compare it with target position
+        self.current_position = position
+        #self.poll_moving()  #start a loop to poll the current actuator value and compare it with target position
+        #if abs(self.target_position - self.current_position)>self.controller.epsilon:
+         #   self.controller.move_at(position)
+        #self.move_done(position)
 
     def move_Rel(self, position):
         """ Move the actuator to the relative target actuator value defined by position
@@ -176,15 +159,16 @@ class DAQ_Move_Arduino(DAQ_Move_base):
         ----------
         position: (flaot) value of the relative target positioning
         """
-        position = self.check_bound(self.current_position+position)-self.current_position
-        self.target_position = position + self.current_position
+        position = self.check_bound(self.current_position+position)
 
-        ## TODO for your custom plugin
-        self.controller.your_method_to_set_a_relative_value()
+        self.controller.move_at(position)
         self.emit_status(ThreadCommand('Update_Status',['Some info you want to log']))
+
+        self.target_position = position
+        self.move_done(position)
         ##############################
 
-        self.poll_moving()
+        #self.poll_moving()
 
     def move_Home(self):
         """
@@ -210,7 +194,7 @@ class DAQ_Move_Arduino(DAQ_Move_base):
       """
 
       ## TODO for your custom plugin
-      self.controller.your_method_to_stop_positioning()
+     # self.
       self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
       self.move_done() #to let the interface know the actuator stopped
       ##############################
