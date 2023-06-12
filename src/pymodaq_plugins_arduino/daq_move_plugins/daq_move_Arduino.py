@@ -3,7 +3,9 @@ from pymodaq.daq_move.utility_classes import comon_parameters  # common set of p
 from pymodaq.daq_utils.daq_utils import ThreadCommand, getLineInfo  # object used to send info back to the main thread
 from easydict import EasyDict as edict  # type of dict
 from pymodaq_plugins_arduino.hardware.arduino_wrapper import ActuatorWrapper
-
+import time
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import pyqtSignal, QThread
 
 from serial.tools import list_ports
 ports = [str(port.name) for port in list_ports.comports()]
@@ -40,8 +42,8 @@ class DAQ_Move_Arduino(DAQ_Move_base):
                      {'title': 'is Multiaxes:', 'name': 'ismultiaxes', 'type': 'bool', 'value': is_multiaxes,
                       'default': False},
                      {'title': 'Status:', 'name': 'multi_status', 'type': 'list', 'value': 'Master',
-                      'values': ['Master', 'Slave']},
-                     {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'values': stage_names},
+                      'limits': ['Master', 'Slave']},
+                     {'title': 'Axis:', 'name': 'axis', 'type': 'list', 'limits': stage_names},
 
                  ]}] + comon_parameters
 
@@ -120,12 +122,16 @@ class DAQ_Move_Arduino(DAQ_Move_base):
 
         self.ini_stage_init(old_controller=controller, new_controller=ActuatorWrapper())
         self.controller.open_communication(self.settings.child(('comport')).value())
-
+        #is_init = self.controller.open_communication(self.settings.child(('comport')).value())
+        #while not is_init:
+        #    QThread.msleep(1000)
+        #    QtWidgets.QApplication.processEvents()
         self.controller.accel_set(self.settings.child(('accel')).value())
         self.controller.max_speed_set(self.settings.child(('maxspeed')).value())
 
+
         info = "Connected"
-        initialized = True  # self.controller.a_method_or_atttribute_to_check_if_init()  # todo
+        initialized =True   # todo
         return info, initialized
 
     def move_Abs(self, position):

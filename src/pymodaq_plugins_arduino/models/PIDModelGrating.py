@@ -1,21 +1,19 @@
-
 from pymodaq.pid.utils import PIDModelGeneric, OutputToActuator, InputFromDetector, main
 
 
 class PIDModelGrating(PIDModelGeneric):
 
+
     limits = dict(max=dict(state=False, value=10),
                   min=dict(state=False, value=0), )
     konstants = dict(kp=1, ki=0, kd=0.0000)
 
-    actuators_name = ["Stepper"]
-    detectors_name = ['Ruler']
 
     Nsetpoints = 1
-    setpoint_ini = [15980]
-    setpoints_names = ['position']
-
-
+    setpoint_ini = [15980.00]
+    setpoint_name = ['Wavenumber']
+    actuators_name = ["Stepper"]
+    detectors_name = ['Ruler']
 
     def __init__(self, pid_controller):
         super().__init__(pid_controller)
@@ -32,8 +30,7 @@ class PIDModelGrating(PIDModelGeneric):
 
     def ini_model(self):
         super().ini_model()
-        self.pid_controller.modules_manager.get_mod_from_name('Ruler', 'det').\
-            settings.child('main_settings', 'wait_time').setValue(0)
+
 
     def convert_input(self, measurements):
         """
@@ -47,8 +44,8 @@ class PIDModelGrating(PIDModelGeneric):
         float: the converted input
 
         """
-        key = list(measurements['Ruler']['data0D'].keys())[0]
-        self.curr_input = measurements['Ruler']['data0D'][key]['data']
+
+        self.curr_input = measurements['Ruler']['data0D']['Ruler_Ruler_CH000']['data']
 
         return InputFromDetector([self.curr_input])
 
@@ -61,5 +58,5 @@ class PIDModelGrating(PIDModelGeneric):
 
 
 if __name__ == '__main__':
-    main("Grating.xml")
+   main("preset_pid_z40.xml")
 

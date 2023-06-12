@@ -30,7 +30,8 @@ class ActuatorWrapper:
         -------
         bool: True is instrument is opened else False
         """
-        self.device=telemetrix.Telemetrix(com_port=port)
+        self.device=telemetrix.Telemetrix(com_port=port,arduino_wait=4)
+
         self.motor = self.device.set_pin_mode_stepper(interface=2, pin1=3, pin2=4)
 
         return True
