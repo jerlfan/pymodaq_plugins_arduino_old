@@ -37,7 +37,7 @@ class ActuatorWrapper:
         return True
 
     def current_position_callback(self, data):
-        print(f'pos {data[2]}\n')
+        #print(f'pos {data[2]}\n')
         self.status = data[2]
 
     def is_running_callback(self, data):

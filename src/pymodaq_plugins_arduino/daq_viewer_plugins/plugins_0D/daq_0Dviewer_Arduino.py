@@ -13,7 +13,7 @@ class DAQ_0DViewer_Arduino(DAQ_Viewer_base):
     """
     params = comon_parameters+[{'title': 'Axis:', 'name': 'axis', 'type': 'int', 'value': 1.00},
         {'title': 'Laser Wavelength (nm):', 'name': 'las_wave', 'type': 'float', 'value': 457.00},
-        {'title': 'correction:', 'name': 'correc', 'type': 'float', 'value': 5904.492}
+        {'title': 'correction:', 'name': 'correc', 'type': 'float', 'value': 5905.0}
         ## TODO for your custom plugin: elements to be added here as dicts in order to control your custom stage
         ]
 
@@ -26,7 +26,7 @@ class DAQ_0DViewer_Arduino(DAQ_Viewer_base):
             A given parameter (within detector_settings) whose value has been changed by the user
         """
         if param.name() == 'las_wave':
-            self.wavelength = -1e7 / param.value()
+            self.wavelength = 1e7 / param.value()
         elif param.name() == 'correc':
             self.correction = param.value()
         elif param.name() == 'axis':
@@ -77,7 +77,8 @@ class DAQ_0DViewer_Arduino(DAQ_Viewer_base):
 
         # synchrone version (blocking function)
 
-        data_tot = self.controller.get_axis_position(self.settings.child('axis').value())
+        data_tot = (self.controller.get_axis_position(self.settings.child('axis').value())
+                    +self.settings.child('correc').value())-(1e7 /self.settings.child('las_wave').value())
 
         self.data_grabed_signal.emit([DataFromPlugins(name='Ruler', data=[np.array([data_tot])], dim='Data0D',labels=['dat0', 'data1'])])
 

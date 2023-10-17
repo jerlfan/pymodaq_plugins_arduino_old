@@ -6,11 +6,11 @@ class PIDModelGrating(PIDModelGeneric):
 
     limits = dict(max=dict(state=False, value=10),
                   min=dict(state=False, value=0), )
-    konstants = dict(kp=1, ki=0, kd=0.0000)
+    konstants = dict(kp=15, ki=0, kd=0.0000)
 
 
     Nsetpoints = 1
-    setpoint_ini = [15980.00]
+    setpoint_ini = [0]
     setpoint_name = ['Wavenumber']
     actuators_name = ["Stepper"]
     detectors_name = ['Ruler']
